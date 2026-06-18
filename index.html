@@ -884,14 +884,55 @@ function formaLabel(f) {
   return 'Dinheiro/Pix';
 }
 
+  async function carregarDadosSheet() {
+
+  if (!SHEETDB_URL) return;
+
+  try {
+
+    const resposta = await fetch(SHEETDB_URL);
+    const dados = await resposta.json();
+
+    if (Array.isArray(dados) && dados.length > 0) {
+
+      lancamentos = dados.map(l => ({
+        ...l,
+        valor: Number(l.valor),
+        parcelaAtual: Number(l.parcelaAtual || 1),
+        parcelaTotal: Number(l.parcelaTotal || 1)
+      }));
+
+      localStorage.setItem(
+        'fc_lancamentos',
+        JSON.stringify(lancamentos)
+      );
+    }
+
+  } catch (erro) {
+    console.error('Erro ao carregar dados:', erro);
+  }
+}
+
 // =====================
 // INIT
 // =====================
-document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
-if (!SHEETDB_URL) document.getElementById('config-banner').style.display = 'flex';
-toggleCampos();
-renderDashboard();
-renderCartoes();
+async function iniciar() {
+
+  document.getElementById('f-data').value =
+    new Date().toISOString().split('T')[0];
+
+  if (!SHEETDB_URL) {
+    document.getElementById('config-banner').style.display = 'flex';
+  }
+
+  await carregarDadosSheet();
+
+  toggleCampos();
+  renderDashboard();
+  renderCartoes();
+}
+
+iniciar();
 
   
 </script>

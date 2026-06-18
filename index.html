@@ -256,6 +256,25 @@
     <div class="section-title">Próximos vencimentos</div>
     <div id="d-vencimentos"></div>
 
+    <div class="section-title">Análises Financeiras</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Gastos por categoria</div>
+    <canvas id="graficoCategorias"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Entradas x Saídas</div>
+    <canvas id="graficoFluxo"></canvas>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <div class="card-title">Evolução do saldo</div>
+  <canvas id="graficoSaldo"></canvas>
+</div>
+
     <div class="section-title">Últimos lançamentos</div>
     <div class="table-wrap" id="dash-tabela">
       <div class="empty">Nenhum lançamento ainda.</div>
@@ -628,6 +647,135 @@ function renderDashboard() {
     </table>`;
 }
 
+
+let chartCategorias = null;
+let chartFluxo = null;
+let chartSaldo = null;
+
+function renderGraficos() {
+
+  // Categoria
+  const categorias = {};
+
+  lancamentos
+    .filter(l => l.tipo === 'saida')
+    .forEach(l => {
+      categorias[l.categoria] =
+        (categorias[l.categoria] || 0) + Math.abs(l.valor);
+    });
+
+  const catLabels = Object.keys(categorias);
+  const catValores = Object.values(categorias);
+
+  const ctxCat = document.getElementById('graficoCategorias');
+
+  if (ctxCat) {
+
+    if (chartCategorias) chartCategorias.destroy();
+
+    chartCategorias = new Chart(ctxCat, {
+      type: 'doughnut',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          data: catValores
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#e8e9eb' }
+          }
+        }
+      }
+    });
+  }
+
+  // Entradas x Saídas
+  const entradas = lancamentos
+    .filter(l => l.tipo === 'entrada')
+    .reduce((s,l)=>s+l.valor,0);
+
+  const saidas = Math.abs(
+    lancamentos
+      .filter(l => l.tipo === 'saida')
+      .reduce((s,l)=>s+l.valor,0)
+  );
+
+  const ctxFluxo = document.getElementById('graficoFluxo');
+
+  if (ctxFluxo) {
+
+    if (chartFluxo) chartFluxo.destroy();
+
+    chartFluxo = new Chart(ctxFluxo,{
+      type:'bar',
+      data:{
+        labels:['Entradas','Saídas'],
+        datasets:[{
+          data:[entradas,saidas]
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{display:false}
+        }
+      }
+    });
+  }
+
+  // Saldo mensal
+  const meses = {};
+
+  lancamentos.forEach(l => {
+
+    const d = new Date(l.data);
+
+    const chave =
+      d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0');
+
+    meses[chave] = (meses[chave] || 0) + l.valor;
+  });
+
+  const labels = Object.keys(meses).sort();
+
+  let acumulado = 0;
+
+  const valores = labels.map(m => {
+    acumulado += meses[m];
+    return acumulado;
+  });
+
+  const ctxSaldo = document.getElementById('graficoSaldo');
+
+  if (ctxSaldo) {
+
+    if (chartSaldo) chartSaldo.destroy();
+
+    chartSaldo = new Chart(ctxSaldo,{
+      type:'line',
+      data:{
+        labels,
+        datasets:[{
+          data: valores,
+          tension: 0.3
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{display:false}
+        }
+      }
+    });
+  }
+  renderGraficos(); 
+}
+  
 // =====================
 // CARTÕES
 // =====================
@@ -741,6 +889,9 @@ if (!SHEETDB_URL) document.getElementById('config-banner').style.display = 'flex
 toggleCampos();
 renderDashboard();
 renderCartoes();
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
 </script>
 </body>
 </html>

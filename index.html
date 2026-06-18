@@ -434,6 +434,8 @@
 
 <div class="toast" id="toast"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 // =====================
 // CONFIG — cole sua URL do SheetDB aqui
@@ -630,6 +632,7 @@ function renderDashboard() {
   const tabela = document.getElementById('dash-tabela');
   if (recentes.length === 0) {
     tabela.innerHTML = '<div class="empty">Nenhum lançamento ainda.</div>';
+    renderGraficos();
     return;
   }
   tabela.innerHTML = `
@@ -645,6 +648,7 @@ function renderDashboard() {
         </tr>`).join('')}
       </tbody>
     </table>`;
+  renderGraficos();
 }
 
 
@@ -773,7 +777,6 @@ function renderGraficos() {
       }
     });
   }
-  renderGraficos(); 
 }
   
 // =====================
@@ -890,7 +893,6 @@ toggleCampos();
 renderDashboard();
 renderCartoes();
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
 </script>
 </body>
